@@ -1,7 +1,7 @@
 #include <avr/interrupt.h>
 
 // timer interrupt count
-const int INTERRUPT_COUNT = 3200;
+const int INTERRUPT_COUNT = 800;
 //operation modes
 const int TRANSITION_MODE  = 0; 
 const int RED_MODE         = 1; 
@@ -24,7 +24,8 @@ const int FULLY_ON = 0;
 // led transition status
 const int RAMPING_UP = 0;
 const int RAMPING_DOWN = 1;
-const int OFF = 2;
+const int HOLDING = 2;
+const int OFF = 3;
 
 unsigned int currentMode = TRANSITION_MODE; // default
 
@@ -37,14 +38,60 @@ int redState = RAMPING_UP;
 int greenState = OFF;
 int blueState = OFF;
 
+// pin indexes
+const int RED = 0;
+const int GREEN = 1;
+const int BLUE = 2;
+int transitionStateTable[6][3];
+
+
 //switch debouncing
 // volatile to force the compiler to not optimize with these vars
 volatile int buttonState = HIGH; // state of the button
 volatile unsigned int shiftReg = 0xFF;    // keypress forces LO bit to 0
 
+void initTransitionStateTable()
+{
+  // to RED
+  transitionStateTable[0][RED] = RAMPING_UP;
+  transitionStateTable[0][GREEN] = OFF;
+  transitionStateTable[0][BLUE] = OFF;
+  
+  //to PURPLE
+  transitionStateTable[1][RED] = HOLDING;
+  transitionStateTable[1][GREEN] = OFF;
+  transitionStateTable[1][BLUE] = RAMPING_UP; 
+  
+  //to BLUE
+  transitionStateTable[2][RED] = RAMPING_DOWN;
+  transitionStateTable[2][GREEN] = OFF;
+  transitionStateTable[2][BLUE] = HOLDING;
+  
+  //to AQUA
+  transitionStateTable[3][RED] = OFF;
+  transitionStateTable[3][GREEN] = RAMPING_UP;
+  transitionStateTable[3][BLUE] = HOLDING;
+
+  //to GREEN
+  transitionStateTable[4][RED] = OFF;
+  transitionStateTable[4][GREEN] = HOLDING;
+  transitionStateTable[4][BLUE] = RAMPING_DOWN;
+  
+  //to YELLOW
+  transitionStateTable[5][RED] = RAMPING_UP;
+  transitionStateTable[5][GREEN] = HOLDING;
+  transitionStateTable[5][BLUE] = OFF;
+  
+  // to DARK
+  transitionStateTable[6][RED] = RAMPING_DOWN;
+  transitionStateTable[6][GREEN] = RAMPING_DOWN;
+  transitionStateTable[6][BLUE] = OFF;   
+  
+  
+}
 void setup()
 {
-  
+  initTransitionStateTable(); 
   Serial.begin(9600);
   pinMode(LED, OUTPUT);
   
@@ -95,6 +142,8 @@ void loop()
   
 }
 
+
+
 void sampleSwitch()
 {
   int currentState = digitalRead(buttonPin);
@@ -104,9 +153,8 @@ void sampleSwitch()
 }
 
 
-void doNextTransitionStep()
-{
-  Serial.println("In doNextTransitionStep");
+void initTransitionMode()
+{  
   currentRed = FULLY_OFF;
   currentGreen = FULLY_OFF;
   currentBlue = FULLY_OFF;
@@ -114,7 +162,47 @@ void doNextTransitionStep()
   analogWrite(greenPin, currentGreen);
   analogWrite(bluePin, currentBlue);
   
+   
+}
+void doNextTransitionStep()
+{
+  Serial.println("In doNextTransitionStep");
+  
+  
+  //Serial.print("redState is ");
+  //Serial.println(redState);
+  //Serial.print("currentRed is ");
+  //Serial.println(currentRed);
+  
   // logic to ramp LED colors up and down cyclically goes here
+  switch(redState)
+  {
+    case RAMPING_UP:
+      if(currentRed > FULLY_ON)
+      {
+        currentRed--;
+      }
+      
+      if(currentRed == FULLY_ON)
+      {
+        redState = RAMPING_DOWN;
+      }
+      break;
+      
+    case RAMPING_DOWN:
+      if(currentRed < FULLY_OFF)
+      {
+        currentRed++;
+      }
+      if(currentRed == FULLY_OFF)
+      {
+        redState = RAMPING_UP;
+      }
+      break;      
+    
+    
+  }
+  analogWrite(redPin, currentRed);
 
 }
 
@@ -157,6 +245,10 @@ void nextMode()
    cli();  
    currentMode++;
    currentMode %= 5;
+   if(currentMode == TRANSITION_MODE)
+   {
+     initTransitionMode();
+   }
    sei();
   
 }
