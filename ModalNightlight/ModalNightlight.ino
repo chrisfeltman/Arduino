@@ -1,13 +1,12 @@
 #include <avr/interrupt.h>
 
-// timer interrupt count
-const int INTERRUPT_COUNT = 800;
 //operation modes
 const int TRANSITION_MODE  = 0; 
 const int RED_MODE         = 1; 
 const int GREEN_MODE       = 2;
 const int BLUE_MODE        = 3;
-const int YELLOW_MODE      = 4;   
+const int YELLOW_MODE      = 4;
+const int OFF_MODE         = 5;
 
 // pin enums
 const int redPin = 11;
@@ -22,33 +21,63 @@ const int FULLY_OFF = 255;
 const int FULLY_ON = 0;
 
 // led transition status
-const int RAMPING_UP = 0;
-const int RAMPING_DOWN = 1;
+const int OFF = 0;
+const int RAMPING_UP = 1;
 const int HOLDING = 2;
-const int OFF = 3;
+const int RAMPING_DOWN = 3;
 
-unsigned int currentMode = TRANSITION_MODE; // default
+int currentMode = TRANSITION_MODE; // default
 
 // init values and states for transition mode
-int currentRed = FULLY_OFF;
-int currentGreen = FULLY_OFF;
-int currentBlue = FULLY_OFF;
-
-int redState = RAMPING_UP;
-int greenState = OFF;
-int blueState = OFF;
 
 // pin indexes
 const int RED = 0;
 const int GREEN = 1;
 const int BLUE = 2;
-int transitionStateTable[6][3];
 
+// vars for transition mode
+int transitionStateTable[7][3];
+unsigned int transitionStateIndex = 0;
+unsigned int cycleCount = 0;
+int outputValues[3] = {FULLY_OFF, FULLY_OFF, FULLY_OFF};
+
+// output counter
+int counter = 0;
+const int OUTPUTCOUNT = 8192;
 
 //switch debouncing
 // volatile to force the compiler to not optimize with these vars
-volatile int buttonState = HIGH; // state of the button
+volatile int buttonState = HIGH; // initial state of the button
 volatile unsigned int shiftReg = 0xFF;    // keypress forces LO bit to 0
+
+void setup()
+{
+  initTransitionStateTable(); 
+  Serial.begin(9600);
+  pinMode(LED, OUTPUT);
+  
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT); 
+  pinMode(buttonPin, INPUT);
+  digitalWrite(buttonPin, HIGH); // turn on internal pull up resistor
+  
+  analogWrite(redPin, FULLY_OFF);
+  analogWrite(greenPin, FULLY_OFF);
+  analogWrite(bluePin, FULLY_OFF);
+}
+
+void loop()
+{ 
+  checkForModeChange(); 
+  
+  counter++;
+  if(counter == OUTPUTCOUNT)   // output to pins each time the counter expires 
+  {
+    doOutput();
+    counter = 0;
+  }
+}
 
 void initTransitionStateTable()
 {
@@ -86,47 +115,11 @@ void initTransitionStateTable()
   transitionStateTable[6][RED] = RAMPING_DOWN;
   transitionStateTable[6][GREEN] = RAMPING_DOWN;
   transitionStateTable[6][BLUE] = OFF;   
-  
-  
-}
-void setup()
-{
-  initTransitionStateTable(); 
-  Serial.begin(9600);
-  pinMode(LED, OUTPUT);
-  
-  pinMode(redPin, OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin, OUTPUT); 
-  pinMode(buttonPin, INPUT);
-  digitalWrite(buttonPin, HIGH); // turn on internal pull up resistor
-  
-  analogWrite(redPin, FULLY_OFF);
-  analogWrite(greenPin, FULLY_OFF);
-  analogWrite(bluePin, FULLY_OFF);
-  
-  // set up timer interrupt
-
-    // initialize Timer1
-    cli();          // disable global interrupts 
-    TCCR1A = 0;     // set entire TCCR1A register to 0
-    TCCR1B = 0;     // same for TCCR1B
- 
-    // set compare match register to desired timer count:
-    OCR1A = INTERRUPT_COUNT;
-    // turn on CTC mode:
-    TCCR1B |= (1 << WGM12);
-    // Set CS10 and CS12 bits for 1024 prescaler:
-    TCCR1B |= (1 << CS10);
-    TCCR1B |= (1 << CS12);
-    // enable timer compare interrupt:
-    TIMSK1 |= (1 << OCIE1A);
-    sei();          // enable global interrupts
+    
 }
 
-void loop()
+void checkForModeChange()
 {
-  
   // debounce switch and check for button state change
   sampleSwitch();
     
@@ -138,11 +131,24 @@ void loop()
   if(shiftReg == 0xFF && buttonState == LOW)
   {
     buttonState = HIGH;
-  }   
-  
+  } 
+    
 }
 
-
+void sendDebugInfo()
+{
+  Serial.print("state ");
+  Serial.print(transitionStateIndex);
+  Serial.print(" cycle ");
+  Serial.print(cycleCount);
+  Serial.print(" red ");
+  Serial.print(outputValues[RED]);
+  Serial.print(" green ");
+  Serial.print(outputValues[GREEN]);
+  Serial.print(" blue ");
+  Serial.println(outputValues[BLUE]);  
+    
+}
 
 void sampleSwitch()
 {
@@ -155,60 +161,61 @@ void sampleSwitch()
 
 void initTransitionMode()
 {  
-  currentRed = FULLY_OFF;
-  currentGreen = FULLY_OFF;
-  currentBlue = FULLY_OFF;
-  analogWrite(redPin, currentRed);
-  analogWrite(greenPin, currentGreen);
-  analogWrite(bluePin, currentBlue);
+  transitionStateIndex = 0;
+  cycleCount = 0;
+  outputValues[RED] = FULLY_OFF;
+  outputValues[GREEN] = FULLY_OFF;
+  outputValues[BLUE] = FULLY_OFF;
+  analogWrite(redPin, FULLY_OFF);
+  analogWrite(greenPin, FULLY_OFF);
+  analogWrite(bluePin, FULLY_OFF);
   
-   
 }
 void doNextTransitionStep()
 {
-  Serial.println("In doNextTransitionStep");
-  
-  
-  //Serial.print("redState is ");
-  //Serial.println(redState);
-  //Serial.print("currentRed is ");
-  //Serial.println(currentRed);
-  
-  // logic to ramp LED colors up and down cyclically goes here
-  switch(redState)
-  {
-    case RAMPING_UP:
-      if(currentRed > FULLY_ON)
-      {
-        currentRed--;
-      }
-      
-      if(currentRed == FULLY_ON)
-      {
-        redState = RAMPING_DOWN;
-      }
-      break;
-      
-    case RAMPING_DOWN:
-      if(currentRed < FULLY_OFF)
-      {
-        currentRed++;
-      }
-      if(currentRed == FULLY_OFF)
-      {
-        redState = RAMPING_UP;
-      }
-      break;      
-    
-    
-  }
-  analogWrite(redPin, currentRed);
 
+  for(int i = 0; i < 3; i++)
+  {
+      int state = transitionStateTable[transitionStateIndex][i];
+           
+      switch(state)
+      {
+        case RAMPING_UP:
+          outputValues[i] = FULLY_OFF - cycleCount;
+          break;
+        case RAMPING_DOWN:
+          outputValues[i] = cycleCount;  
+          break;
+          /*
+        case HOLDING:
+          outputValues[i] = FULLY_ON;
+          break;
+        case OFF: 
+         outputValues[i] = FULLY_OFF; 
+         break; 
+        */ 
+      }     
+  }
+ 
+  // output calculated values;
+  analogWrite(redPin, outputValues[RED]);
+  analogWrite(greenPin, outputValues[GREEN]);
+  analogWrite(bluePin, outputValues[BLUE]);
+ 
+  cycleCount++;
+  
+  // advance state every 255 cycles
+  if(cycleCount == 256)
+  {
+    cycleCount = 0;
+    transitionStateIndex++;
+    transitionStateIndex = transitionStateIndex % 7;  // cycle 0-6
+  }
+  
 }
 
 void doRed()
 {
-  Serial.println("In doRed");
   analogWrite(redPin, FULLY_ON);
   analogWrite(greenPin, FULLY_OFF);
   analogWrite(bluePin, FULLY_OFF);
@@ -216,7 +223,6 @@ void doRed()
 
 void doGreen()
 {
-  Serial.println("In doGreen");
   analogWrite(redPin, FULLY_OFF);
   analogWrite(greenPin, FULLY_ON);
   analogWrite(bluePin, FULLY_OFF);
@@ -224,7 +230,6 @@ void doGreen()
 
 void doBlue()
 {
-  Serial.println("In doBlue");
   analogWrite(redPin, FULLY_OFF);
   analogWrite(greenPin, FULLY_OFF);
   analogWrite(bluePin, FULLY_ON);
@@ -232,29 +237,39 @@ void doBlue()
 
 void doYellow()
 {
-  Serial.println("In doYellow");
   analogWrite(redPin, FULLY_ON);
   analogWrite(greenPin, FULLY_ON);
   analogWrite(bluePin, FULLY_OFF);
 }
 
+void doOff()
+{
+  analogWrite(redPin, FULLY_OFF);
+  analogWrite(greenPin, FULLY_OFF);
+  analogWrite(bluePin, FULLY_OFF);
+}
+
 void nextMode()
 {
-  // disable interrupts while we are changing mode to prevent a bad mode value 
-  // from being seen if INT occurs between increment and modulo
-   cli();  
-   currentMode++;
-   currentMode %= 5;
+
+   if(currentMode == OFF_MODE)
+   {
+     currentMode = 0;
+   }
+   else
+   {
+     currentMode++;
+   }
+   
+   // need to reset vars or we will pick up where we left off  
    if(currentMode == TRANSITION_MODE)
    {
      initTransitionMode();
-   }
-   sei();
-  
+   } 
 }
 
 
-void timerInterrupt()   // later we'll use function pointer table, KISS for now
+void doOutput()   // later we'll use function pointer table, KISS for now
 {
 
    switch(currentMode)
@@ -274,18 +289,11 @@ void timerInterrupt()   // later we'll use function pointer table, KISS for now
     case YELLOW_MODE: 
       doYellow();
       break;
+    case OFF_MODE: 
+      doOff();
+      break;
   }
-  // auoto cycle for test
-  //nextMode();
-  
+
 }
-
-//  timer interrupt handler
-ISR(TIMER1_COMPA_vect)
-{
-  timerInterrupt();     
-}
-
-
 
 
