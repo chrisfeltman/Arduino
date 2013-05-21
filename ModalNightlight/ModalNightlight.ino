@@ -1,12 +1,13 @@
 /*
 TODO: 
 
-  change ints to bytes
+  change ints to bytes 
+  use timer0 instead of a software counter for the cycle count
+  it should already ahve been started by the runtime,
+  check with serial output 
   
-
-
-
 */
+
 //operation modes
 const int TRANSITION_MODE  = 0; 
 const int RED_MODE         = 1; 
@@ -43,7 +44,7 @@ const int BLUE = 2;
 // steady state outputs
 int outputValuesTable[6][3] = 
 { 
-  {FULLY_OFF,FULLY_OFF,FULLY_OFF},     //TRANSITION MODE
+  {FULLY_OFF,FULLY_OFF,FULLY_OFF},     //TRANSITION MODE, only these values will ever change
   {FULLY_ON, FULLY_OFF,FULLY_OFF},     //RED
   {FULLY_OFF, FULLY_ON, FULLY_OFF},    //GREEN
   {FULLY_OFF, FULLY_OFF, FULLY_ON},    // BLUE
@@ -71,9 +72,9 @@ int counter = 0;
 const int OUTPUTCOUNT = 8192;   // adjust to change cycling rate of transition mode
 
 //switch debouncing
-// volatile to force the compiler to not optimize with these vars
-volatile int buttonState = HIGH; // initial state of the button
-volatile unsigned int shiftReg = 0xFF;    // keypress forces LO bit to 0
+
+int buttonState = HIGH; // initial state of the button
+unsigned int shiftReg = 0xFF;    // keypress forces LO bit to 0
 
 /********************************************************************************************************
 Code
@@ -138,7 +139,6 @@ void sampleSwitch()
   int currentState = digitalRead(buttonPin);
   shiftReg = shiftReg << 1;                 // shift left 1 bit       
   shiftReg += (currentState & 0x01);        // set LO bit to current switch pin reading
-
 }
 
 void initTransitionMode()
@@ -158,9 +158,9 @@ void doNextTransitionStep()
 
   for(int i = 0; i < 3; i++)   // update the RGB values for the next output step
   {
-    int state = transitionStateTable[transitionStateIndex][i];   
+    int colorState = transitionStateTable[transitionStateIndex][i];   
 
-    switch(state)
+    switch(colorState)
     {
     case RAMPING_UP:
       outputValuesTable[TRANSITION_MODE][i] = FULLY_OFF - cycleCount;
@@ -174,6 +174,9 @@ void doNextTransitionStep()
   }
 
   cycleCount++;
+ 
+ // if we change this to use an internal hardware counter, 
+ // timer overflow interrupt could advance the transitionStateIndex
  
   if(cycleCount == 256)   // advance state every 255 cycles
   {
