@@ -43,6 +43,8 @@ X     X
  g - pin 6
 ***************************************************************************************************/
 #include <SevenSegShiftReg.h>
+
+// store the lookup table in program memory, must be declared outside the class
 prog_uchar PROGMEM seg7LookupTable[] =
 { 
   0x3f,  // 0011 1111 a,b,c,d,e,f        - 0
@@ -65,41 +67,34 @@ prog_uchar PROGMEM seg7LookupTable[] =
 };
 SevenSegShiftReg::SevenSegShiftReg(int dataPin, int latchPin, int clockPin)
 {
+		// remember which pins to use
 		mDataPin = dataPin;
 		mLatchPin = latchPin;
-		mClockPin = clockPin;
-		
-		
+		mClockPin = clockPin;	
 }
 
 void SevenSegShiftReg::displayByte(byte digit)
 {
+	// get low and high nybbles of byte
 	byte highNybble = (digit & 0xF0) >> 4;
 	byte lowNybble = digit & 0x0F;
-	Serial.print("High nybble: ");
-	Serial.print(highNybble);
-	Serial.print(" Low nybble: ");
-	Serial.println(lowNybble);
 	
+	// look up segment codes from progmem table
 	byte lowByteOut = pgm_read_byte_near(seg7LookupTable + lowNybble);
 	byte highByteOut = pgm_read_byte_near(seg7LookupTable + highNybble);
-	Serial.print("low byte would be ");
-	Serial.println(lowByteOut);
-	Serial.print("high byte would be ");
-	Serial.println(highByteOut);
+	
+	// pack into an unsigned int for output
 	unsigned int output = 0;
 	output = highByteOut << 8;
 	output = output | lowByteOut;
 	
-	Serial.print("output would be ");
-	Serial.println(output);
 	byteOutSerial(output);
 }
 
 void SevenSegShiftReg::byteOutSerial(unsigned int writeByte)
 {
 	digitalWrite(mLatchPin, LOW);          //Pull latch LOW to start sending data
-	shiftOut(mDataPin, mClockPin, MSBFIRST, highByte(writeByte));         //Send the data
-	shiftOut(mDataPin, mClockPin, MSBFIRST, lowByte(writeByte));
+	shiftOut(mDataPin, mClockPin, MSBFIRST, highByte(writeByte));   //Send HO byte
+	shiftOut(mDataPin, mClockPin, MSBFIRST, lowByte(writeByte));	// send LO byte
 	digitalWrite(mLatchPin, HIGH);         //Pull latch HIGH to stop sending data
 }
