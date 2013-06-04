@@ -15,11 +15,45 @@ void setup()
 
 void loop()
 {
+  // counting 00 to FF
   for(int i = 0; i < 256; i++)
   {
-    Serial.print("count is ");
-    Serial.println(i);
     reg.displayByte(i);
     delay(200);
   }
+  
+  // blank display
+  reg.clearDisplay();
+  delay(500);
+  
+  // blink display
+  showBlink(0x00, 5);
+  showBlink(0x11, 5);
+  showBlink(0x22, 5);
+  showBlink(0x33, 5);
+  showBlink(0x44, 5);
+  showBlink(0x55, 5);
+  showBlink(0x66, 5);
+  showBlink(0x77, 5);
+  showBlink(0x88, 5);
+  showBlink(0x99, 5);
+  showBlink(0xaa, 5);
+  showBlink(0xbb, 5);
+  showBlink(0xcc, 5);
+  showBlink(0xdd, 5);
+  showBlink(0xee, 5);
+  showBlink(0xff, 5);
+  
+  
+}
+
+void showBlink(byte value, int timesToBlink)
+{
+    for(int i = 0; i < timesToBlink; i++)
+    {
+      reg.displayByte(value);
+      delay(100);
+      reg.clearDisplay();
+      delay(200);  
+    }
 }

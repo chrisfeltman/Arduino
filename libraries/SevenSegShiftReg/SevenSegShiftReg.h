@@ -14,5 +14,6 @@ class SevenSegShiftReg
 	public:
 		SevenSegShiftReg(int dataPin, int latchPin, int clockPin);
 		void displayByte(byte digit);
+		void clearDisplay();
 };
 #endif		

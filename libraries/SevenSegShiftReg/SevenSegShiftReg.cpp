@@ -1,6 +1,7 @@
 /************************************************************************************************
 *
-* Test wiring and display driver code for RadioShack 276-0075 7 Segment LED Display
+* Test wiring and display driver code for  2 RadioShack 276-0075 7 Segment LED Displays
+* connected to two SN54HC595 8-bit shift registers
 *
 *
 * Pinouts: (top left corner is pin 1,  going around in a U so that bottom right corner is pin 8, top right is pin 14)
@@ -32,15 +33,6 @@ X     X
 *  14 - Anode for segment a
 *
 *
-
- Arduino pins for LCD display segments:
- a - pin 0
- b - pin 1
- c - pin 2
- d - pin 3
- e - pin 4
- f - pin 5
- g - pin 6
 ***************************************************************************************************/
 #include <SevenSegShiftReg.h>
 #include <avr/pgmspace.h>
@@ -66,6 +58,7 @@ prog_uchar PROGMEM seg7LookupTable[] =
   0x71   // 0111 0001 a,e,f,g            - F
 
 };
+
 SevenSegShiftReg::SevenSegShiftReg(int dataPin, int latchPin, int clockPin)
 {
 		// remember which pins to use
@@ -84,7 +77,7 @@ void SevenSegShiftReg::displayByte(byte digit)
 	byte lowByteOut = pgm_read_byte_near(seg7LookupTable + lowNybble);
 	byte highByteOut;
 	
-	// save a table lookup if they are the same
+	// save a table lookup if they are the same (flash is slow-ish)
 	if(highNybble != lowNybble)
 	{
 		highByteOut = pgm_read_byte_near(seg7LookupTable + highNybble);
@@ -100,6 +93,15 @@ void SevenSegShiftReg::displayByte(byte digit)
 	output = output | lowByteOut;
 	
 	byteOutSerial(output);
+}
+
+void SevenSegShiftReg::clearDisplay()
+{
+	digitalWrite(mLatchPin, LOW);          //Pull latch LOW to start sending data
+	shiftOut(mDataPin, mClockPin, MSBFIRST, 0x00);   //Send HO byte
+	shiftOut(mDataPin, mClockPin, MSBFIRST, 0x00);	// send LO byte
+	digitalWrite(mLatchPin, HIGH);         //Pull latch HIGH to stop sending data
+	
 }
 
 void SevenSegShiftReg::byteOutSerial(unsigned int writeByte)
