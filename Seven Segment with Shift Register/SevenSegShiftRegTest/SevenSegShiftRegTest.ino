@@ -3,10 +3,11 @@ int dataPin = 2;        //Define which pins will be used for the Shift Register 
 int latchPin = 3;
 int clockPin = 4;
 
+// set up the 16 bit shift register object
 SevenSegShiftReg reg = SevenSegShiftReg(dataPin, latchPin, clockPin); 
+
 void setup()
 {
-  Serial.begin(9600);
   pinMode(dataPin, OUTPUT);       //Configure each IO Pin
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);

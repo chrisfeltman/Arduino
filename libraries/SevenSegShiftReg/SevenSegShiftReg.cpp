@@ -43,6 +43,7 @@ X     X
  g - pin 6
 ***************************************************************************************************/
 #include <SevenSegShiftReg.h>
+#include <avr/pgmspace.h>
 
 // store the lookup table in program memory, must be declared outside the class
 prog_uchar PROGMEM seg7LookupTable[] =
@@ -81,10 +82,20 @@ void SevenSegShiftReg::displayByte(byte digit)
 	
 	// look up segment codes from progmem table
 	byte lowByteOut = pgm_read_byte_near(seg7LookupTable + lowNybble);
-	byte highByteOut = pgm_read_byte_near(seg7LookupTable + highNybble);
+	byte highByteOut;
+	
+	// save a table lookup if they are the same
+	if(highNybble != lowNybble)
+	{
+		highByteOut = pgm_read_byte_near(seg7LookupTable + highNybble);
+	}
+	else
+	{
+		highByteOut = lowByteOut;
+	}
 	
 	// pack into an unsigned int for output
-	unsigned int output = 0;
+	unsigned int output;
 	output = highByteOut << 8;
 	output = output | lowByteOut;
 	

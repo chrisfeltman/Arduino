@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <avr/pgmspace.h>
+
 
 #ifndef _SevenSegShiftReg
 #define _SevenSegShiftReg
