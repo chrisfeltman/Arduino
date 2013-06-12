@@ -52,7 +52,7 @@ void showBlink(byte value, int timesToBlink)
     for(int i = 0; i < timesToBlink; i++)
     {
       reg.displayByte(value);
-      delay(100);
+      delay(200);
       reg.clearDisplay();
       delay(200);  
     }

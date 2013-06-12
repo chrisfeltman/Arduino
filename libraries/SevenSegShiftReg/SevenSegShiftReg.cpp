@@ -74,13 +74,13 @@ void SevenSegShiftReg::displayByte(byte digit)
 	byte lowNybble = digit & 0x0F;
 	
 	// look up segment codes from progmem table
-	byte lowByteOut = pgm_read_byte_near(seg7LookupTable + lowNybble);
+	byte lowByteOut = pgm_read_byte_near(&seg7LookupTable[lowNybble]);
 	byte highByteOut;
 	
 	// save a table lookup if they are the same (flash is slow-ish)
 	if(highNybble != lowNybble)
 	{
-		highByteOut = pgm_read_byte_near(seg7LookupTable + highNybble);
+		highByteOut = pgm_read_byte_near(&seg7LookupTable[highNybble]);
 	}
 	else
 	{
