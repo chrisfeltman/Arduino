@@ -8,7 +8,7 @@
 #define BUS_SIZE 8      // # of eeproms on the i2c bus
 #define MAX_ADDRESS 0x7FFF // max address for this EEPROM
 
-byte writeVal = 0xF0;
+
 
 // device address matrix
 byte eepromBus[BUS_SIZE] = 
@@ -55,10 +55,8 @@ void loop()
 void writeTest(int eeprom)
 {
   byte data[64];
-  for(int i = 0; i < PAGE_SIZE; i++)
-  {
-    data[i] = writeVal;
-  }
+  byte counter = 0;
+  
 
   Serial.print("Writing 32k bytes to eeprom by pages ");
   Serial.println(eeprom);
@@ -69,6 +67,12 @@ void writeTest(int eeprom)
     Serial.print("Writing block ");
     Serial.print((address / PAGE_SIZE) + 1);
     Serial.println(" of 512");
+    
+    for(int i = 0; i < PAGE_SIZE; i++)
+    {
+      data[i] = counter++;
+    }  
+    
     eepromWritePage(eeprom, address, data); 
     delay(5);
   } 
@@ -76,42 +80,7 @@ void writeTest(int eeprom)
 
 }
 
-void pageWriteTest(int eeprom)
-{
-  byte data[PAGE_SIZE];
-  for(int i = 0; i < PAGE_SIZE; i++)
-  {
-    data[i] = i;
-  }
-  eepromWritePage(eeprom, 0x0000, data);
-  
-  delay(10);
-  Serial.println("Page write finished, verifying...");
-  
-  bool result = true;
-  for(unsigned int i = 0; i < PAGE_SIZE; i++)
-  {
-    byte data = eepromReadByte(eeprom, i);
-    Serial.print("read ");
-    Serial.print(data);
-    Serial.print(" at ");
-    Serial.println(i);
-    if(data != (byte) i)
-    {
-      result = false;
-      break;
-    }
-  }
-  if(result)
-  {
-    Serial.println("Block test passed");
-  }
-  else
-  {
-    Serial.println("Block test failed");
-  }
-  
-}
+
 
 void verify(int eeprom)
 {
@@ -121,12 +90,13 @@ void verify(int eeprom)
 
   boolean pass = true;
 
+  byte value = 0;
   for(unsigned int address = 0; address <= MAX_ADDRESS; address++)
   {
 
     byte data = eepromReadByte(eeprom, address);
 
-    if(data != writeVal)
+    if(data != value)
     {
       pass = false;
       Serial.print("Test failed. Byte @ ");
@@ -135,7 +105,7 @@ void verify(int eeprom)
       Serial.println(data);
       break;
     } 
-
+    value++;
   }
   if(pass)
   {
