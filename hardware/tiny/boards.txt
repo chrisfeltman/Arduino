@@ -1,0 +1,121 @@
+###########################################################################
+
+attiny85at16e.name=ATtiny85 @ 16 MHz  (external crystal; 4.3 V BOD)
+
+# The following do NOT work...
+# attiny85at16e.upload.using=avrispv2
+# attiny85at16e.upload.using=Pololu USB AVR Programmer
+
+# The following DO work (pick one)...
+attiny85at16e.upload.using=arduino:arduinoisp
+# attiny85at16e.upload.protocol=avrispv2
+# attiny85at16e.upload.using=pololu
+
+attiny85at16e.upload.maximum_size=8192
+
+# Ext. Crystal Osc.; Frequency 8.0- MHz; Start-up time PWRDWN/RESET: 16K CK/14 CK + 65 ms; [CKSEL=1111 SUT=11]
+# Brown-out detection level at VCC=4.3 V; [BODLEVEL=100]
+# Preserve EEPROM memory through the Chip Erase cycle; [EESAVE=0]
+# Serial program downloading (SPI) enabled; [SPIEN=0]
+
+attiny85at16e.bootloader.low_fuses=0xFF
+attiny85at16e.bootloader.high_fuses=0xD4
+attiny85at16e.bootloader.extended_fuses=0xFF
+attiny85at16e.bootloader.path=empty
+attiny85at16e.bootloader.file=empty85at16.hex
+
+attiny85at16e.build.mcu=attiny85
+attiny85at16e.build.f_cpu=16000000L
+attiny85at16e.build.core=tiny
+ 
+###########################################################################
+
+attiny85at16p.name=ATtiny85 @ 16 MHz  (internal PLL; 4.3 V BOD)
+
+# The following do NOT work...
+# attiny85at16p.upload.using=avrispv2
+# attiny85at16p.upload.using=Pololu USB AVR Programmer
+
+# The following DO work (pick one)...
+attiny85at16p.upload.using=arduino:arduinoisp
+# attiny85at16p.upload.protocol=avrispv2
+# attiny85at16p.upload.using=pololu
+
+attiny85at16p.upload.maximum_size=8192
+
+# PLL Clock; Start-up time PWRDWN/RESET: 1K CK/14 CK + 4 ms; [CKSEL=0001 SUT=00]
+# Brown-out detection level at VCC=4.3 V; [BODLEVEL=100]
+# Preserve EEPROM memory through the Chip Erase cycle; [EESAVE=0]
+# Serial program downloading (SPI) enabled; [SPIEN=0]
+
+attiny85at16p.bootloader.low_fuses=0xC1
+attiny85at16p.bootloader.high_fuses=0xD4
+attiny85at16p.bootloader.extended_fuses=0xFF
+attiny85at16p.bootloader.path=empty
+attiny85at16p.bootloader.file=empty85at16.hex
+
+attiny85at16p.build.mcu=attiny85
+attiny85at16p.build.f_cpu=16000000L
+attiny85at16p.build.core=tiny
+ 
+###########################################################################
+
+attiny85at8.name=ATtiny85 @ 8 MHz  (internal oscillator; BOD disabled)
+
+# The following do NOT work...
+# attiny85at8.upload.using=avrispv2
+# attiny85at8.upload.using=Pololu USB AVR Programmer
+
+# The following DO work (pick one)...
+attiny85at8.upload.using=arduino:arduinoisp
+# attiny85at8.upload.protocol=avrispv2
+# attiny85at8.upload.using=pololu
+
+attiny85at8.upload.maximum_size=8192
+
+# Default clock (slowly rising power; long delay to clock; 8 MHz internal)
+# Int. RC Osc. 8 MHz; Start-up time PWRDWN/RESET: 6 CK/14 CK + 64 ms; [CKSEL=0010 SUT=10]; default value
+# Brown-out detection disabled; [BODLEVEL=111]
+# Preserve EEPROM memory through the Chip Erase cycle; [EESAVE=0]
+
+attiny85at8.bootloader.low_fuses=0xE2
+attiny85at8.bootloader.high_fuses=0xD7
+attiny85at8.bootloader.extended_fuses=0xFF
+attiny85at8.bootloader.path=empty
+attiny85at8.bootloader.file=empty85at8.hex
+
+attiny85at8.build.mcu=attiny85
+attiny85at8.build.f_cpu=8000000L
+attiny85at8.build.core=tiny
+ 
+###########################################################################
+
+attiny85at1.name=ATtiny85 @ 1 MHz  (internal oscillator; BOD disabled)
+
+# The following do NOT work...
+# attiny85at1.upload.using=avrispv2
+# attiny85at1.upload.using=Pololu USB AVR Programmer
+
+# The following DO work (pick one)...
+attiny85at1.upload.using=arduino:arduinoisp
+# attiny85at1.upload.protocol=avrispv2
+# attiny85at1.upload.using=pololu
+
+attiny85at1.upload.maximum_size=8192
+
+# Default clock (slowly rising power; long delay to clock; 8 MHz internal; divide clock by 8)
+# Int. RC Osc. 8 MHz; Start-up time PWRDWN/RESET: 6 CK/14 CK + 64 ms; [CKSEL=0010 SUT=10]; default value
+# Divide clock by 8 internally; [CKDIV8=0]
+# Brown-out detection disabled; [BODLEVEL=111]
+# Preserve EEPROM memory through the Chip Erase cycle; [EESAVE=0]
+
+attiny85at1.bootloader.low_fuses=0x62
+attiny85at1.bootloader.high_fuses=0xD7
+attiny85at1.bootloader.extended_fuses=0xFF
+attiny85at1.bootloader.path=empty
+attiny85at1.bootloader.file=empty85at1.hex
+
+attiny85at1.build.mcu=attiny85
+attiny85at1.build.f_cpu=1000000L
+attiny85at1.build.core=tiny
+ 

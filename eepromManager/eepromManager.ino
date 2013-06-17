@@ -133,7 +133,55 @@ void dump()
 
 void load()
 {
-  Serial.println("Load not yet implemented");
+  Serial.println("Select eeprom to upload (1-8):");
+  while(!Serial.available()){}
+  
+  int eeprom = Serial.parseInt();
+  if(eeprom < 1  || eeprom > 8)
+  {
+     Serial.println("Invalid EEPROM index specified");
+     return;
+  }
+  Serial.print("EEPROM ");
+  Serial.print(eeprom);
+  Serial.print(" selected ");
+  
+  Serial.println("Switching to binary mode, send 16 bit file size, then data a byte at a time.");
+  while (!Serial.available()){}
+  char sizeBuf[2];
+  byte addrLen = Serial.readBytes(sizeBuf, 2);
+  if (addrLen == 0)
+  {
+    Serial.println("Invalid file size");
+    return;
+  }
+  unsigned int uploadSize = (sizeBuf[0] << 8) + sizeBuf[1]; 
+ 
+  unsigned int bytesRead = 0;
+  byte byteCount = 0;
+  char pageBuffer[PAGE_SIZE];
+  char rcvbuf[1];
+  unsigned int address = 0x0000;
+  while(bytesRead < uploadSize)
+  {
+     
+    Serial.readBytes(rcvbuf, 1);
+    {
+      bytesRead++;
+      pageBuffer[byteCount++] = rcvbuf[0];
+      
+      if(byteCount == PAGE_SIZE)
+      {
+        eepromWritePage(eeprom - 1, address, (byte*)pageBuffer);
+        byteCount = 0;
+        address += PAGE_SIZE;
+      }
+      
+    }
+
+  }
+  
+  Serial.println("Upload complete");
 }
 
 
@@ -149,6 +197,20 @@ void dumpEeprom(byte eeprom)
   }  
 }
 
+// write a block at a time
+void eepromWritePage(int eeprom, unsigned int startAddress, byte* data)
+{
+ 
+  Wire.beginTransmission(eepromBus[eeprom]);
+  Wire.write(highByte(startAddress));
+  Wire.write(lowByte(startAddress));
+  for(int i = 0; i < PAGE_SIZE; i++)
+  {
+    Wire.write(data[i]);  
+  }
+  Wire.endTransmission();  
+
+}
 
 void dumpBlock(byte eeprom, unsigned int address)
 {

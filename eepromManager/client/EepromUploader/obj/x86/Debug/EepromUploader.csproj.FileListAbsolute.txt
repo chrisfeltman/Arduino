@@ -1,0 +1,7 @@
+C:\Users\chris.feltman\Documents\Arduino\eepromManager\client\EepromUploader\bin\Debug\EepromUploader.exe
+C:\Users\chris.feltman\Documents\Arduino\eepromManager\client\EepromUploader\bin\Debug\EepromUploader.pdb
+C:\Users\chris.feltman\Documents\Arduino\eepromManager\client\EepromUploader\obj\x86\Debug\EepromUploader.Form1.resources
+C:\Users\chris.feltman\Documents\Arduino\eepromManager\client\EepromUploader\obj\x86\Debug\EepromUploader.Properties.Resources.resources
+C:\Users\chris.feltman\Documents\Arduino\eepromManager\client\EepromUploader\obj\x86\Debug\EepromUploader.csproj.GenerateResource.Cache
+C:\Users\chris.feltman\Documents\Arduino\eepromManager\client\EepromUploader\obj\x86\Debug\EepromUploader.exe
+C:\Users\chris.feltman\Documents\Arduino\eepromManager\client\EepromUploader\obj\x86\Debug\EepromUploader.pdb
