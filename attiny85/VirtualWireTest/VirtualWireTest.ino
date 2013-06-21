@@ -1,75 +1,102 @@
-#include<VirtualWire.h>
-#include<avr/sleep.h>
-#include <avr/wdt.h>
+//#include<VirtualWire.h>
+#include<SoftwareSerial.h>
+//#include<Narcoleptic.h>
+#include <SoftEasyTransfer.h>
 #define LED 0
 #define PTT 3
 
 
+
+SoftwareSerial mySerial(5,2);
+SoftEasyTransfer ET;
+
+struct SEND_DATA_STRUCT
+{
+  int sample1;
+  int sample2;
+  int sample3;
+  int sample4;
+  int sample5;
+};
+
+SEND_DATA_STRUCT samples;  
+  
+  
 void setup()
 {
-    //setPowerSave();
-    //setup_watchdog(8);
-    pinMode(PTT, OUTPUT);
-    pinMode(LED, OUTPUT);
-    vw_setup(2000);	 // Bits per sec
-    vw_set_tx_pin(1);
-    //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    //sleep_enable();  
+  //adcOff();
+  //setup_watchdog();
+  pinMode(PTT, OUTPUT);
+  pinMode(LED, OUTPUT);
+  //vw_setup(2000);	 // Bits per sec
+  //vw_set_tx_pin(1);
+  //DIDR0 = 0x00; //enable digital input buffers on all ADC0-ADC5 pins.
+  mySerial.begin(9600);
+  ET.begin(details(samples), &mySerial);
+
+
 }
 
-byte count = 0;
+
 void loop()
 {
-      
-    char msg[7] = {'h','e','l','l','o',' ', '#'};
-    msg[6] = count++;
-    
+  //adcOn();
+  sendSample();
 
-    digitalWrite(0, HIGH); // Flash a light to show transmitting
-    digitalWrite(PTT, HIGH); // turn on the transmitter
-    delay(5); // this delay may not be necessary
-    
-    vw_send((uint8_t *)msg, strlen(msg));
-    vw_wait_tx(); // Wait until the whole message is gone
-    
+  //adcOff();
+  //Narcoleptic.delay(8000);
+  delay(500);
+
+}
+
+void sendSample()
+{
+   
+  int thermistorReading;
+  
+  samples.sample1 = analogRead(A2);
+  delay(10);
+  samples.sample2 = analogRead(A2);
+  delay(10);
+  samples.sample3 = analogRead(A2);
+  delay(10);
+  samples.sample4 = analogRead(A2);
+  delay(10);
+  samples.sample5 = analogRead(A2);
+  delay(10);
  
-    digitalWrite(0, LOW);
-    digitalWrite(PTT, LOW);  /// xmitter off 
-    delay(5000);
-    //sleep_mode(); 
+  ET.sendData();
+  digitalWrite(LED, HIGH); // Flash a light to show transmitting
+  digitalWrite(PTT, HIGH); // turn on the transmitter
+
+
+  //vw_send((uint8_t *)msg, 8);
+  //vw_wait_tx(); // Wait until the whole message is gone
+
+  digitalWrite(PTT, LOW);  /// xmitter off 
+  delay(500);
+  digitalWrite(LED, LOW);  // LED off
 }
 
 
-void setPowerSave()
+void adcOff()
 {
+
+
   ADCSRA &= ~(1<<ADEN); //Disable ADC
   ACSR = (1<<ACD); //Disable the analog comparator
   DIDR0 = 0x3F; //Disable digital input buffers on all ADC0-ADC5 pins.
+
 }
 
-// 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
-// 6=1 sec,7=2 sec, 8=4 sec, 9= 8sec
-void setup_watchdog(int ii) {
-   byte bb;
-  int ww;
-  if (ii > 9 ) ii=9;
-  bb=ii & 7;
-  if (ii > 7) bb|= (1<<5);
-  bb|= (1<<WDCE);
-  ww=bb;
-
-  MCUSR &= ~(1<<WDRF);
-  // start timed sequence
-  WDTCR |= (1<<WDCE) | (1<<WDE);
-  // set new watchdog timeout value
-  WDTCR = bb;
-  WDTCR |= _BV(WDIE);// timer goes off every 8 seconds
- 
-  sei(); //Enable interrupts
-}
-
-ISR(PCINT0_vect)
+void adcOn()
 {
-  //This vector is only here to wake unit up from sleep mode
+  ADCSRA &= (1<<ADEN); //Enable ADC
+  ACSR = (0<<ACD); //Enable the analog comparator
+  DIDR0 = 0x00; // Enable digital input buffers on all ADC0-ADC5 pins.
+
 }
+
+
+
 

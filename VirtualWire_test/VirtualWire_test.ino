@@ -1,9 +1,9 @@
 #include <VirtualWire.h>
-#undef int
-#undef abs
-#undef double
-#undef float
-#undef round
+//#undef int
+//#undef abs
+//#undef double
+//#undef float
+//#undef round
 void setup()
 {
   Serial.begin(115200);
@@ -38,13 +38,12 @@ void loop()
 	// Message with a good checksum received, dump it.
 	Serial.print("Got: ");
 	
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < buflen; i++)
 	{
-	    Serial.print((char)buf[i]);
-            //Serial.print(" ");
+	    Serial.print(buf[i], HEX);
+            Serial.print(" ");
 	}
-        Serial.print(" count: ");
-        Serial.print(buf[6]);
+      
         
 	Serial.println("");
         digitalWrite(13, false);

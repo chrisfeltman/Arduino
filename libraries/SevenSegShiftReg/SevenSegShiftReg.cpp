@@ -64,7 +64,21 @@ SevenSegShiftReg::SevenSegShiftReg(int dataPin, int latchPin, int clockPin)
 		// remember which pins to use
 		mDataPin = dataPin;
 		mLatchPin = latchPin;
-		mClockPin = clockPin;	
+		mClockPin = clockPin;
+		pinMode(dataPin, OUTPUT);       //Configure each IO Pin
+		pinMode(latchPin, OUTPUT);
+		pinMode(clockPin, OUTPUT);
+		mThreePinInterface = true;
+}
+
+SevenSegShiftReg::SevenSegShiftReg(int dataPin, int clockPin)
+{
+	// latch pin needs to be connected to clock Pin per 595 datasheet
+	mDataPin = dataPin;
+	mClockPin = clockPin;
+	pinMode(dataPin, OUTPUT);       //Configure each IO Pin
+	pinMode(clockPin, OUTPUT);
+	mThreePinInterface = false;
 }
 
 void SevenSegShiftReg::displayByte(byte digit)
@@ -97,17 +111,25 @@ void SevenSegShiftReg::displayByte(byte digit)
 
 void SevenSegShiftReg::clearDisplay()
 {
-	digitalWrite(mLatchPin, LOW);          //Pull latch LOW to start sending data
-	shiftOut(mDataPin, mClockPin, MSBFIRST, 0x00);   //Send HO byte
-	shiftOut(mDataPin, mClockPin, MSBFIRST, 0x00);	// send LO byte
-	digitalWrite(mLatchPin, HIGH);         //Pull latch HIGH to stop sending data
-	
+	byteOutSerial(0x0000);
 }
 
 void SevenSegShiftReg::byteOutSerial(unsigned int writeByte)
 {
-	digitalWrite(mLatchPin, LOW);          //Pull latch LOW to start sending data
+	if(mThreePinInterface)
+	{
+		digitalWrite(mLatchPin, LOW);          //Pull latch LOW to start sending data
+	}
 	shiftOut(mDataPin, mClockPin, MSBFIRST, highByte(writeByte));   //Send HO byte
 	shiftOut(mDataPin, mClockPin, MSBFIRST, lowByte(writeByte));	// send LO byte
-	digitalWrite(mLatchPin, HIGH);         //Pull latch HIGH to stop sending data
+	if(mThreePinInterface)
+	{
+		digitalWrite(mLatchPin, HIGH);         //Pull latch HIGH to stop sending data
+	}
+	else
+	{
+		digitalWrite(mClockPin, HIGH);
+		digitalWrite(mClockPin, LOW);
+	}
+	
 }
