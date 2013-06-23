@@ -1,6 +1,6 @@
 #include<VirtualWire.h>
 //#include<SoftwareSerial.h>
-//#include<Narcoleptic.h>
+#include<Narcoleptic.h>
 //#include <SoftEasyTransfer.h>
 #include <EasyTransferVirtualWire.h>
 #define LED 0
@@ -44,8 +44,8 @@ void loop()
   sendSample();
 
   //adcOff();
-  //Narcoleptic.delay(8000);
-  delay(500);
+  Narcoleptic.delay(8000);
+  //delay(500);
 
 }
 

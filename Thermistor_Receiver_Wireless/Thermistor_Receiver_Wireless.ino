@@ -85,6 +85,7 @@ void printCalculation()
   // convert the value to resistance
   average = 1024 / average - 1;
   average = SERIESRESISTOR / average;
+  //average = average / SERIESRESISTOR;
   Serial.print("Thermistor resistance ");
   Serial.println(average);
   float steinhart;
