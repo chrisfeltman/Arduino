@@ -17,7 +17,7 @@
 #include <VirtualWire.h>
 #include <EasyTransferVirtualWire.h>
 
-const float calibration = -4.45;
+const float calibration = -2.15;
 
 //SoftwareSerial mySerial(3,4);
 //SoftEasyTransfer ET;

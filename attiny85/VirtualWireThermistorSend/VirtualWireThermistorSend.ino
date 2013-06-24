@@ -1,13 +1,25 @@
+/*******************************************************************************************
+* Send Thermistor readings wirelessly via 433 Mhz cheapo transmitter
+* CEF 6-24-2013
+* Revisions:
+* 0.11 - added 2N222 to act as PTT for transmitter (it doesn't have one built in)
+* 0.12 - added power down ADC for extra power savings
+* 
+* TODO - add voltage monitor reading for 9V battery to data packet
+********************************************************************************************/
+
 #include<VirtualWire.h>
-//#include<SoftwareSerial.h>
 #include<Narcoleptic.h>
-//#include <SoftEasyTransfer.h>
 #include <EasyTransferVirtualWire.h>
+
+// pins used
 #define LED 0
-//#define PTT 3
+#define PTT 2
 #define THERM A3
 
-//SoftwareSerial mySerial(5,2);
+#define SENDINTERVAL 4    // how many 8 second sleep cycles to wait before transmitting
+#define REPEATMESSAGE 3   // how many times to transmit the packet for redundancy
+
 EasyTransferVirtualWire ET;
 
 struct SEND_DATA_STRUCT
@@ -23,64 +35,71 @@ SEND_DATA_STRUCT samples;
 
 void setup()
 {
-  //adcOff();
-  //setup_watchdog();
-  //pinMode(PTT, OUTPUT);
+
+  pinMode(PTT, OUTPUT);
   pinMode(LED, OUTPUT);
- 
+
   vw_setup(2000);	 // Bits per sec
   vw_set_tx_pin(1);
-  //vw_set_ptt_pin(PTT);
- 
+  vw_set_ptt_pin(PTT);
+
   ET.begin(details(samples));
-
-
 }
-
 
 void loop()
 {
-  //adcOn();
-  sendSample();
+  static byte wakeCount = 0;
 
-  //adcOff();
-  Narcoleptic.delay(8000);
-  //delay(500);
+  if (wakeCount % SENDINTERVAL == 0)
+  {
+    transmitSampleSet();
+  }
+  wakeCount++;
+  Narcoleptic.delay(8000);  // put the cpu to sleep for 8 secs
+
+}
+
+void transmitSampleSet()
+{
+  adcOn();
+  for(byte i = 0; i < REPEATMESSAGE; i++)
+  {
+    sendSample();
+  }
+  adcOff();
 
 }
 
 void sendSample()
 {
-   
-  int thermistorReading;
-  
+
   samples.sample1 = analogRead(THERM);
-  //samples.sample1 = 550;
   delay(10);
-  samples.sample2 = analogRead(THERM);
-  //samples.sample2 = 550;
-  delay(10);
-  samples.sample3 = analogRead(THERM);
-  //samples.sample3 = 550;
-  delay(10);
-  samples.sample4 = analogRead(THERM);
-  //samples.sample4 = 550;
-  delay(10);
-  samples.sample5 = analogRead(THERM);
-  //samples.sample5 = 550;
-  delay(10);
- 
   
+  samples.sample2 = analogRead(THERM);
+  delay(10);
+  
+  samples.sample3 = analogRead(THERM);
+  delay(10);
+  
+  samples.sample4 = analogRead(THERM);
+  delay(10);
+  
+  samples.sample5 = analogRead(THERM);
+
   digitalWrite(LED, HIGH); // Flash a light to show transmitting
-  //digitalWrite(PTT, HIGH); // turn on the transmitter
   ET.sendData();
   delay(500);
-  //digitalWrite(PTT, LOW);  /// xmitter off  
   digitalWrite(LED, LOW);  // LED off
 }
 
+void adcOn()
+{
+  bitSet(ADCSRA,ADEN);  // set enable bit in ADC Control Reg
+  delay(10);             // give ADC time to stabilize
+}
 
-
-
-
-
+void adcOff()
+{
+  bitClear(ADCSRA, ADEN);  // clear enable bit in ADC Control Reg
+}
