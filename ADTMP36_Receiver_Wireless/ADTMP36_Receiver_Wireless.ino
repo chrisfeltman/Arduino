@@ -1,16 +1,15 @@
 // which analog pin to connect
-#define THERMISTORPIN A1
-// resistance at 25 degrees C
-#define THERMISTORNOMINAL 50000
-// temp. for nominal resistance (almost always 25 C)
-#define TEMPERATURENOMINAL 25
+#define TEMPSENSOR A1
+// reference ADC reading at 25 degrees C
+#define BASELINE_MV_AT_25 750
+#define BASELINE_TEMP 25
+#define MILLIVOLTS_PER_DEGC 10
+#define MILLIVOLT_CORRECTION 13.0
+
 // how many samples to take and average, more takes longer
 // but is more 'smooth'
 #define NUMSAMPLES 5
-// The beta coefficient of the thermistor (usually 3000-4000)
-#define BCOEFFICIENT 4300
-// the value of the 'other' resistor
-#define SERIESRESISTOR 46600
+
 #define LED 13
 
 //#include <SoftwareSerial.h>
@@ -26,6 +25,7 @@ EasyTransferVirtualWire ET;
 
 struct SEND_DATA_STRUCT
 {
+  int batteryVoltage;
   int sample1;
   int sample2;
   int sample3;
@@ -40,9 +40,9 @@ void setup() {
   Serial.begin(115200);
   delay(5);
   Serial.println("Waiting for samples...");
-  //mySerial.begin(9600);
+
   ET.begin(details(samples));
-  //vw_set_ptt_inverted(true); // Required for DR3100
+
   vw_setup(2000);	 // Bits per sec
   vw_set_rx_pin(2);
   vw_rx_start();       // Start the receiver PLL running
@@ -67,6 +67,7 @@ void printCalculation()
   
   // average all the samples out
   average = 0;
+  
   Serial.print("first sample was ");
   Serial.println(samples.sample1);
   average += samples.sample1;
@@ -83,24 +84,23 @@ void printCalculation()
   Serial.println(samples.sample5); 
   average += samples.sample5;
   
+  Serial.print("Battery voltage is ");
+  Serial.println(samples.batteryVoltage);
  
   average /= NUMSAMPLES;
   Serial.print("Average analog reading ");
   Serial.println(average);
-  // convert the value to resistance
-  average = 1024 / average - 1;
-  average = SERIESRESISTOR / average;
-  //average = average / SERIESRESISTOR;
-  Serial.print("Thermistor resistance ");
-  Serial.println(average);
-  float steinhart;
-  steinhart = average / THERMISTORNOMINAL; // (R/Ro)
-  steinhart = log(steinhart); // ln(R/Ro)
-  steinhart /= BCOEFFICIENT; // 1/B * ln(R/Ro)
-  steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
-  steinhart = 1.0 / steinhart; // Invert
-  steinhart -= 273.15; // convert to C
-  float tempf = (steinhart * 9 / 5) + 32 + calibration;
+  
+  float averageMillis = round((1100.0 / 1024.0 * average) - MILLIVOLT_CORRECTION);
+  Serial.print("Average millivolt reading ");
+  Serial.println(averageMillis);
+  
+  float tempC = (averageMillis - 500) / 10;
+  Serial.print("Temperature ");
+  Serial.print(tempC);
+  Serial.println(" *C");
+ 
+  float tempf = (tempC * 9 / 5) + 32;
   Serial.print("Temperature ");
   Serial.print(tempf);
   Serial.println(" *F");
