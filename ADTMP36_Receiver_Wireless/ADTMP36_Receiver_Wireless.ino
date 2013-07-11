@@ -4,7 +4,7 @@
 #define BASELINE_MV_AT_25 750
 #define BASELINE_TEMP 25
 #define MILLIVOLTS_PER_DEGC 10
-#define MILLIVOLT_CORRECTION 13.0
+#define MILLIVOLT_CORRECTION 13
 
 // how many samples to take and average, more takes longer
 // but is more 'smooth'
@@ -17,7 +17,7 @@
 #include <VirtualWire.h>
 #include <EasyTransferVirtualWire.h>
 
-const float calibration = -2.15;
+const float calibration = -0.3;
 
 //SoftwareSerial mySerial(3,4);
 //SoftEasyTransfer ET;
@@ -95,7 +95,7 @@ void printCalculation()
   Serial.print("Average millivolt reading ");
   Serial.println(averageMillis);
   
-  float tempC = (averageMillis - 500) / 10;
+  float tempC = (averageMillis - 500) / 10 + calibration;
   Serial.print("Temperature ");
   Serial.print(tempC);
   Serial.println(" *C");

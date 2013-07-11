@@ -16,6 +16,10 @@ void setup()
 void loop()
 {
   nightRider();
+  nightRider();
+  povTwoOn();
+  povTwoOn();
+  povTwoOn();
   povTwoOn();
 
 }
